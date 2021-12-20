@@ -59,9 +59,7 @@ IndexCustomer.enqueue(3)
 
 Note, if you are attempting to prevent two identical jobs from executing concurrently that are
 already enqueued, then you probably want to use another excellent
-gem, [que-locks](https://github.com/airhorns/que-locks). Both that gem
-and this one can be used in tandem, as they cover different use cases, and work at different levels
-in the tech stack.
+gem, [que-locks](https://github.com/airhorns/que-locks).
 
 ## Internal workings
 
