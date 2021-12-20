@@ -10,8 +10,8 @@ RSpec.describe ::Que::Unique do
 
     after(:each) do
       TestUniqueJob.jobs.clear
-      expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq({})
-      expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(0)
+      expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq({})
+      expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(0)
     end
 
     it "enqueues as normal with no args" do
@@ -30,8 +30,8 @@ RSpec.describe ::Que::Unique do
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
           { TestUniqueJob => ["qux", { bar: :bob }] }.to_json => true
         }
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected)
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(1)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
         expect(TestUniqueJob.jobs.count).to eq(2)
 
         expected_inner = {
@@ -43,16 +43,16 @@ RSpec.describe ::Que::Unique do
         ActiveRecord::Base.transaction do
           TestUniqueJob.enqueue("foo", bar: :baz) # Should be ignored
           TestUniqueJob.enqueue("bip", bar: :baz) # Should be added
-          expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected_inner)
-          expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(2)
+          expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
+          expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(2)
           expect(TestUniqueJob.jobs.count).to eq(3)
         end
 
         # Now, check that the inner transaction elements are still enqueued, and the depth has
         # wound back one.
         # ie, the depth and array length are different
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(1)
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected_inner)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
         expect(TestUniqueJob.jobs.count).to eq(3)
       end
       expect(TestUniqueJob.jobs.count).to eq(3)
@@ -64,37 +64,38 @@ RSpec.describe ::Que::Unique do
         expected_outer = {
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true
         }
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected_outer)
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(1)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_outer)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
         expect(TestUniqueJob.jobs.count).to eq(1)
 
         expected_inner = {
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
           { TestUniqueJob => ["bip", { bar: :baz }] }.to_json => true
         }
-        begin
+
+        expect do
           ActiveRecord::Base.transaction do
             TestUniqueJob.enqueue("foo", bar: :baz) # Should be ignored
             TestUniqueJob.enqueue("bip", bar: :baz) # Should be added
 
-            expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected_inner)
-            expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(2)
+            expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
+            expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(2)
             expect(TestUniqueJob.jobs.count).to eq(2)
 
             # Now throw an exception that will cause a rollback.
             raise "Rollback now!"
           end
-        rescue
+        end.to raise_error("Rollback now!") do
           # At this point, the depth should be back to one, and the enqueued cache should be
           # length 2
-          expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL_DEPTH]).to eq(1)
-          expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL].keys.count).to eq(2)
+          expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
+          expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY].keys.count).to eq(2)
           # And carry on...
         end
 
         # Check that the inner transaction elements *are* enqueued. This may no be what you expect,
         # but it is how ActiveRecord works. http://goo.gl/sa6uz0
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected_inner)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
       end
     end
 
@@ -112,7 +113,7 @@ RSpec.describe ::Que::Unique do
         expected = {
           { TestUniqueJob => ["foo", { bar: :baz, foo: :qux }] }.to_json => true
         }
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
       end
       expect(TestUniqueJob.jobs.count).to eq(1)
     end
@@ -140,7 +141,7 @@ RSpec.describe ::Que::Unique do
         expected = {
           { TestUniqueJob => ["Test string"] }.to_json => true
         }
-        expect(Thread.current[QUE_UNIQUE_THREAD_LOCAL]).to eq(expected)
+        expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
       end
       expect(TestUniqueJob.jobs.count).to eq(1)
     end
@@ -172,13 +173,13 @@ RSpec.describe ::Que::Unique do
 
     it "rollbacks from an error in a transaction" do
       did_error = false
-      begin
+      expect do
         ActiveRecord::Base.transaction do
           TestUniqueJob.enqueue("Test string", "urn:banco:1234")
           expect(que_job_count).to eq(1)
           raise "Oh no!"
         end
-      rescue
+      end.to raise_error("Oh no!") do
         did_error = true
       end
 
@@ -194,13 +195,13 @@ RSpec.describe ::Que::Unique do
         TestUniqueJob.enqueue("Test string", "urn:banco:1234")
         expect(que_job_count).to eq(1)
 
-        begin
+        expect do
           ActiveRecord::Base.transaction do
             TestUniqueJob.enqueue("Test string", "urn:banco:3456")
             expect(que_job_count).to eq(2)
             raise "Oh no!"
           end
-        rescue
+        end.to raise_error("Oh no!") do
           # At this point, although the inner transaction block has been busted out of, no DB
           # rollback has occurred, as we are still in the one single transaction. Thus, the
           # job should still be enqueued.
@@ -220,10 +221,6 @@ RSpec.describe ::Que::Unique do
       enqueued_args = records_array.first["args"]
       as_array = JSON.parse(enqueued_args)
       expect(as_array).to eq(["foo", { "bar" => "baz" }, 4, "String"])
-    end
-
-    class SomeTestClass
-      # Used to check class => string conversion
     end
 
     # By default, to_json converts a Class to '{}'. Various libraries like multi_json and oj

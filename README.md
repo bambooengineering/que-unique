@@ -25,8 +25,9 @@ Now, in a transaction, only one of that set of args (as json'd) will be enqueued
 
 ## Development
 
-Check out this repo, then run the tests with the following:
-
+1. Ensure you have a postgres running locally. You can do so easily with docker:
+   `docker run -p5432:5432 postgres:9.5.0`
+2. Check out this repo, then run the tests with the following:
 ```bash
 bundle install
 bundle exec rake spec
