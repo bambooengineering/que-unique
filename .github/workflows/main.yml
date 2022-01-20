@@ -5,6 +5,18 @@ on: [push,pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports:
+        - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v2
     - name: Set up Ruby
@@ -12,6 +24,8 @@ jobs:
       with:
         ruby-version: 2.7.2
     - name: Run the default task
+      env:
+        DB_HOST: 127.0.0.1
       run: |
         gem install bundler -v 2.2.11
         bundle install
