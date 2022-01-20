@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    que-unique (0.1.0)
-      activerecord (> 4.0, < 6.0)
+    que-unique (0.1.1)
+      activerecord (> 4.0, < 8.0)
       que (~> 0.12)
 
 GEM

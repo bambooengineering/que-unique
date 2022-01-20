@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
 
-  spec.add_dependency "activerecord", "> 4.0", "< 6.0"
+  spec.add_dependency "activerecord", "> 4.0", "< 8.0"
   spec.add_dependency "que", "~> 0.12"
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "pg"
