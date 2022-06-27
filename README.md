@@ -1,6 +1,7 @@
 # Que::Unique
 
-`Que::Unique` is a gem that ensures that identical que jobs are not scheduled multiple times during a
+`Que::Unique` is a gem that ensures that identical [que](https://github.com/que-rb/que) jobs
+are not scheduled multiple times during a
 transaction block. If the same job with the same args is detected, it will be coalesced into one.
 A typical use case would be modifying a customer at various points during
 a code route, and wanting to index it once in elasticsearch afterwards.
@@ -71,6 +72,32 @@ transaction nesting. If a nested transaction is detected, the increment goes up.
 Once we detect that the transaction count has come back down to zero, we can conclude that we 
 have left the transaction boundary, and the transaction is being committed. We enqueue the required
 jobs and clear the thread locals.
+
+## Comparison with que-locks
+
+There is another gem called [que-locks](https://github.com/airhorns/que-locks) that does similar
+things to que-unique. They use very different techniques, so the semantics are not the same.
+
+* The `que-unique` gem performs its deduping in-memory, in one transaction, in a single thread.
+  This means it is fast / has no network overhead. It does mean, though, that if you have two concurrent 
+  transactions, they may both enqueue a job which needn't be run twice.
+
+  The `que-locks` gem performs its deduping by locking rows in the DB. This can help mitigate
+  cross-transaction dupe enqueueing at the point of `enqueue` (though if the race is fast enough,
+  some duplicate rows will make it through). It does entail more network / DB overhead.
+
+* `que-unique` supports `--worker-count` greater than one. `que-locks` doesn't currently.
+
+* `que-unique` does nothing to stop duplication once the rows are enqueued.
+
+  `que-locks` does, by checking for duplicate rows and skipping duplicates where possible.
+
+The above means that the gems can work in tandem. At enqueue time `que-unique` can prevent "trivial"
+duplicates quickly in memory, then `que-locks` which can do a (slightly more expensive) lower level
+DB check before the final insert. `que-locks` can then also perform post-enqueue deduping.
+
+It is important to note that even using both a the same time cannot prevent all duplicates in a
+fast moving multi-threaded system. Make sure you always write idempotent jobs.
 
 ## Development
 
