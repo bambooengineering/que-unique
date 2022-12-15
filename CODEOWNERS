@@ -1,0 +1,4 @@
+# This file is used by GitHub to auto assign a team for review. That team is then set up in the
+# GitHub Org to dish it out to a single team member.
+
+* @bambooengineering/pull-request-reviewers
