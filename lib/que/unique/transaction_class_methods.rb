@@ -8,9 +8,9 @@ require_relative "constants"
 module Que
   module Unique
     module TransactionClassMethods
-      def transaction_with_unique_que(*args, &block)
+      def transaction_with_unique_que(...)
         start_que_unique_handled_transaction
-        transaction_without_unique_que(*args, &block)
+        transaction_without_unique_que(...)
       ensure
         end_que_unique_handled_transaction
       end

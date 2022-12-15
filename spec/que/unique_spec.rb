@@ -2,14 +2,24 @@
 
 require "spec_helper"
 
-RSpec.describe ::Que::Unique do
-  context "checking the thread locals" do
-    before(:each) do
-      Que.adapter = Que::Testing::Adapter.new
-    end
+RSpec.describe Que::Unique do
+  before(:each) do
+    Que.connection = ActiveRecord
+    ActiveRecord::Base.connection.execute("DELETE FROM que_jobs")
+    expect(que_job_count).to eq(0)
+  end
 
+  # :reek:UtilityFunction
+  def select_jobs
+    ActiveRecord::Base.connection.execute("SELECT * FROM que_jobs")
+  end
+
+  def que_job_count
+    select_jobs.to_a.count
+  end
+
+  context "when checking the thread locals" do
     after(:each) do
-      TestUniqueJob.jobs.clear
       expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq({})
       expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(0)
     end
@@ -18,7 +28,7 @@ RSpec.describe ::Que::Unique do
       ActiveRecord::Base.transaction do
         3.times { TestUniqueJob.enqueue }
       end
-      expect(TestUniqueJob.jobs.count).to eq(1)
+      expect(que_job_count).to eq(1)
     end
 
     it "has the right thread locals during nested transactions" do
@@ -28,16 +38,16 @@ RSpec.describe ::Que::Unique do
 
         expected = {
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
-          { TestUniqueJob => ["qux", { bar: :bob }] }.to_json => true
+          { TestUniqueJob => ["qux", { bar: :bob }] }.to_json => true,
         }
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
         expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
-        expect(TestUniqueJob.jobs.count).to eq(2)
+        expect(que_job_count).to eq(2)
 
         expected_inner = {
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
           { TestUniqueJob => ["qux", { bar: :bob }] }.to_json => true,
-          { TestUniqueJob => ["bip", { bar: :baz }] }.to_json => true
+          { TestUniqueJob => ["bip", { bar: :baz }] }.to_json => true,
         }
 
         ActiveRecord::Base.transaction do
@@ -45,7 +55,7 @@ RSpec.describe ::Que::Unique do
           TestUniqueJob.enqueue("bip", bar: :baz) # Should be added
           expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
           expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(2)
-          expect(TestUniqueJob.jobs.count).to eq(3)
+          expect(que_job_count).to eq(3)
         end
 
         # Now, check that the inner transaction elements are still enqueued, and the depth has
@@ -53,24 +63,24 @@ RSpec.describe ::Que::Unique do
         # ie, the depth and array length are different
         expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
-        expect(TestUniqueJob.jobs.count).to eq(3)
+        expect(que_job_count).to eq(3)
       end
-      expect(TestUniqueJob.jobs.count).to eq(3)
+      expect(que_job_count).to eq(3)
     end
 
     it "has the right thread locals when a rollback occurs" do
       ActiveRecord::Base.transaction do
         TestUniqueJob.enqueue("foo", bar: :baz)
         expected_outer = {
-          { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true
+          { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
         }
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_outer)
         expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(1)
-        expect(TestUniqueJob.jobs.count).to eq(1)
+        expect(que_job_count).to eq(1)
 
         expected_inner = {
           { TestUniqueJob => ["foo", { bar: :baz }] }.to_json => true,
-          { TestUniqueJob => ["bip", { bar: :baz }] }.to_json => true
+          { TestUniqueJob => ["bip", { bar: :baz }] }.to_json => true,
         }
 
         expect do
@@ -80,7 +90,7 @@ RSpec.describe ::Que::Unique do
 
             expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected_inner)
             expect(Thread.current[Que::Unique::THREAD_LOCAL_DEPTH_KEY]).to eq(2)
-            expect(TestUniqueJob.jobs.count).to eq(2)
+            expect(que_job_count).to eq(2)
 
             # Now throw an exception that will cause a rollback.
             raise "Rollback now!"
@@ -103,7 +113,7 @@ RSpec.describe ::Que::Unique do
       ActiveRecord::Base.transaction do
         3.times { TestUniqueJob.enqueue("foo", bar: :baz) }
       end
-      expect(TestUniqueJob.jobs.count).to eq(1)
+      expect(que_job_count).to eq(1)
     end
 
     it "enqueues differently ordered hashes as 1" do
@@ -111,11 +121,11 @@ RSpec.describe ::Que::Unique do
         TestUniqueJob.enqueue("foo", bar: :baz, foo: :qux)
         TestUniqueJob.enqueue("foo", foo: :qux, bar: :baz)
         expected = {
-          { TestUniqueJob => ["foo", { bar: :baz, foo: :qux }] }.to_json => true
+          { TestUniqueJob => ["foo", { bar: :baz, foo: :qux }] }.to_json => true,
         }
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
       end
-      expect(TestUniqueJob.jobs.count).to eq(1)
+      expect(que_job_count).to eq(1)
     end
 
     it "enqueues different strings as different calls" do
@@ -123,7 +133,7 @@ RSpec.describe ::Que::Unique do
         TestUniqueJob.enqueue("foo", bar: :baz)
         TestUniqueJob.enqueue("qux", bar: :baz)
       end
-      expect(TestUniqueJob.jobs.count).to eq(2)
+      expect(que_job_count).to eq(2)
     end
 
     it "enqueues different hashes as different calls" do
@@ -132,36 +142,22 @@ RSpec.describe ::Que::Unique do
         TestUniqueJob.enqueue("foo", qux: :baz)
         TestUniqueJob.enqueue("foo", bar: :qux)
       end
-      expect(TestUniqueJob.jobs.count).to eq(3)
+      expect(que_job_count).to eq(3)
     end
 
     it "enqueues classes as strings" do
       ActiveRecord::Base.transaction do
         TestUniqueJob.enqueue("Test string")
         expected = {
-          { TestUniqueJob => ["Test string"] }.to_json => true
+          { TestUniqueJob => ["Test string"] }.to_json => true,
         }
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
       end
-      expect(TestUniqueJob.jobs.count).to eq(1)
+      expect(que_job_count).to eq(1)
     end
   end
 
-  context "checking the DB access" do
-    before(:each) do
-      Que.connection = ActiveRecord
-      ActiveRecord::Base.connection.execute("DELETE FROM que_jobs")
-      expect(que_job_count).to eq(0)
-    end
-
-    def select_jobs
-      ActiveRecord::Base.connection.execute("SELECT * FROM que_jobs")
-    end
-
-    def que_job_count
-      select_jobs.to_a.count
-    end
-
+  context "when checking the DB access" do
     it "ensures only one of this job gets enqueued for the same args" do
       ActiveRecord::Base.transaction do
         TestUniqueJob.enqueue("Test string", "urn:banco:1234")

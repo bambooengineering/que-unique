@@ -1,5 +1,5 @@
 PATH
-  remote: .
+  remote: ..
   specs:
     que-unique (0.1.1)
       activerecord (> 4.0, < 8.0)
@@ -154,6 +154,7 @@ DEPENDENCIES
   fasterer
   pg
   pry-byebug
+  que (~> 2.0)
   que-testing
   que-unique!
   reek
