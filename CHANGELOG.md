@@ -1,3 +1,7 @@
+## 1.1.0 - 2023-04-18
+
+- Add Rails 6.1 support [#31](https://github.com/bambooengineering/que-unique/pull/31)
+
 ## 1.0.0 - 2022-12-15
 
 - Add appraisal, fasterer and reek [#19](https://github.com/bambooengineering/que-unique/pull/19)
