@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    que-unique (1.0.0)
+    que-unique (1.1.0)
       que (>= 0.14, < 3.0.0)
       rails (> 6.0, < 8.0)
 
@@ -212,7 +212,7 @@ GEM
       rubocop (~> 1.41)
     rubocop-rake (0.6.0)
       rubocop (~> 1.0)
-    rubocop-rspec (2.19.0)
+    rubocop-rspec (2.20.0)
       rubocop (~> 1.33)
       rubocop-capybara (~> 2.17)
     ruby-progressbar (1.13.0)
@@ -251,4 +251,4 @@ DEPENDENCIES
   rubocop-rspec
 
 BUNDLED WITH
-   2.3.12
+   2.3.26
