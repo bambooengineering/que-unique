@@ -19,9 +19,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.bindir = "exe"
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
-  spec.required_ruby_version = ">= 2.7"
+  spec.required_ruby_version = ">= 3.0"
 
-  spec.add_dependency "activerecord", "> 4.0", "< 8.0"
+  spec.add_dependency "rails", "> 6.0", "< 8.0"
   spec.add_dependency "que", ">= 0.14", "< 3.0.0"
   spec.add_development_dependency "appraisal"
   spec.add_development_dependency "combustion"

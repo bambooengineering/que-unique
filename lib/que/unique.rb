@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'active_support/concern'
 require "que"
 require_relative "unique/version"
 require_relative "unique/constants"

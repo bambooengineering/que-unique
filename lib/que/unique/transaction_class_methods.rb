@@ -8,22 +8,11 @@ require_relative "constants"
 module Que
   module Unique
     module TransactionClassMethods
-      def transaction_with_unique_que(...)
+      def transaction(...)
         start_que_unique_handled_transaction
-        transaction_without_unique_que(...)
+        super(...)
       ensure
         end_que_unique_handled_transaction
-      end
-
-      class << self
-        def extended(base)
-          base.class_eval do
-            class << self
-              alias_method :transaction_without_unique_que, :transaction
-              alias_method :transaction, :transaction_with_unique_que
-            end
-          end
-        end
       end
 
       private
@@ -49,4 +38,4 @@ module Que
   end
 end
 
-ActiveRecord::Base.extend Que::Unique::TransactionClassMethods
+ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend Que::Unique::TransactionClassMethods
