@@ -2,7 +2,7 @@ require:
 - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.0
   DisplayCopNames: true
   NewCops: enable
   SuggestExtensions: false
@@ -83,4 +83,3 @@ Style/FrozenStringLiteralComment:
   Enabled: false
 Style/StringLiterals:
   EnforcedStyle: double_quotes
-

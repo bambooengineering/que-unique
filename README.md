@@ -64,12 +64,13 @@ gem, [que-locks](https://github.com/airhorns/que-locks).
 
 ## Internal workings
 
-Internally, `Que::Scheduler` works by aliasing the `ActiveRecord::Base.transaction` call, 
+Internally, `Que::Scheduler` works by prepending a module to
+`ActiveRecord::ConnectionAdapters::DatabaseStatements` that wraps the `transaction` method,
 where it starts a thread local array which holds a hash of JSON strings of the arguments
 that have been scheduled. We also start a monitor to check how deep we are in the
 transaction nesting. If a nested transaction is detected, the increment goes up.
 
-Once we detect that the transaction count has come back down to zero, we can conclude that we 
+Once we detect that the transaction count has come back down to zero, we can conclude that we
 have left the transaction boundary, and the transaction is being committed. We enqueue the required
 jobs and clear the thread locals.
 
@@ -79,7 +80,7 @@ There is another gem called [que-locks](https://github.com/airhorns/que-locks) t
 things to que-unique. They use very different techniques, so the semantics are not the same.
 
 * The `que-unique` gem performs its deduping in-memory, in one transaction, in a single thread.
-  This means it is fast / has no network overhead. It does mean, though, that if you have two concurrent 
+  This means it is fast / has no network overhead. It does mean, though, that if you have two concurrent
   transactions, they may both enqueue a job which needn't be run twice.
 
   The `que-locks` gem performs its deduping by locking rows in the DB. This can help mitigate
@@ -103,12 +104,12 @@ fast moving multi-threaded system. Make sure you always write idempotent jobs.
 
 1. Ensure you have a postgres running locally. You can do so easily with docker:
    ```bash
-   docker run -p5432:5432 postgres:9.5.0
+   docker run -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:14.7
    ```
 2. Check out this repo, then run the tests with the following:
    ```bash
    bundle install
-   bundle exec rake spec
+   bin/rspec
    ```
 
 ## Contributing
