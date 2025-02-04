@@ -1,3 +1,7 @@
+## UNRELEASED
+
+- Add Rails 8 support [#52](https://github.com/bambooengineering/que-unique/pull/52)
+
 ## 1.1.0 - 2023-04-18
 
 - Add Rails 6.1 support [#31](https://github.com/bambooengineering/que-unique/pull/31)

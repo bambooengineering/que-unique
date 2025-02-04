@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "active_support"
 require "active_record"
 require_relative "constants"
 
@@ -10,7 +11,7 @@ module Que
     module TransactionClassMethods
       def transaction(...)
         start_que_unique_handled_transaction
-        super(...)
+        super
       ensure
         end_que_unique_handled_transaction
       end

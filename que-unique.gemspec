@@ -21,12 +21,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.required_ruby_version = ">= 3.0"
 
-  spec.add_dependency "rails", "> 6.0", "< 8.0"
   spec.add_dependency "que", ">= 0.14", "< 3.0.0"
+  spec.add_dependency "rails", "> 6.0", "< 9.0"
   spec.add_development_dependency "appraisal"
   spec.add_development_dependency "combustion"
+  spec.add_development_dependency "concurrent-ruby", "1.3.4" # https://github.com/CocoaPods/CocoaPods/issues/12744#issuecomment-2597704666
   spec.add_development_dependency "database_cleaner"
   spec.add_development_dependency "fasterer"
+  spec.add_development_dependency "mutex_m" # Ruby 3.4 compatibility https://youtrack.jetbrains.com/issue/IDEA-365370/mutexm-error-when-running-Rails-minitests
   spec.add_development_dependency "pg"
   spec.add_development_dependency "pry-byebug"
   spec.add_development_dependency "que-testing"
