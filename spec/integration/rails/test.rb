@@ -17,14 +17,14 @@ ActiveRecord::Base.establish_connection(
 Que.connection = ActiveRecord
 
 if defined?(Que::Version) && Que::Version =~ /^0\./
-    # See https://github.com/que-rb/que/issues/247#issuecomment-595258236
-    Que::Adapters::Base::CAST_PROCS[1184] = lambda do |value|
-      case value
-      when Time then value
-      when String then Time.parse(value)
-      else raise "Unexpected time class: #{value.class} (#{value.inspect})"
-      end
+  # See https://github.com/que-rb/que/issues/247#issuecomment-595258236
+  Que::Adapters::Base::CAST_PROCS[1184] = lambda do |value|
+    case value
+    when Time then value
+    when String then Time.parse(value)
+    else raise "Unexpected time class: #{value.class} (#{value.inspect})"
     end
+  end
 end
 
 class SomeJob < Que::Job
@@ -39,6 +39,7 @@ end
 class User < ActiveRecord::Base
   after_save :queue_job
 
+  # :reek:UtilityFunction
   def queue_job
     SomeJob.enqueue
   end
@@ -62,9 +63,9 @@ def expect_job_count(expected_count)
     "SELECT count(*) FROM que_jobs WHERE job_class = 'SomeJob'"
   ).to_a.first.fetch("count")
 
-  if actual_count != expected_count
-    raise "Expected exactly #{expected_count} jobs but got #{actual_count}"
-  end
+  return unless actual_count != expected_count
+
+  raise "Expected exactly #{expected_count} jobs but got #{actual_count}"
 end
 
 begin

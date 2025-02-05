@@ -6,7 +6,7 @@ require "combustion"
 require "pry-byebug"
 require "database_cleaner"
 
-Dir["#{__dir__}/../spec/support/**/*.rb"].sort.each { |f| require f }
+Dir["#{__dir__}/../spec/support/**/*.rb"].each { |f| require f }
 
 Combustion.schema_format = :sql
 Combustion.initialize! :active_record, :action_controller
