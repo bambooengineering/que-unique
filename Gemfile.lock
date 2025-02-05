@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    que-unique (1.1.0)
+    que-unique (1.2.0)
       que (>= 0.14, < 3.0.0)
       rails (> 6.0, < 9.0)
 
@@ -169,7 +169,7 @@ GEM
     net-pop (0.1.2)
     net-protocol (0.2.2)
       timeout
-    net-smtp (0.5.0)
+    net-smtp (0.5.1)
       net-protocol
     nio4r (2.7.4)
     nokogiri (1.18.2-x86_64-darwin)
