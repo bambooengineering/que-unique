@@ -1,4 +1,4 @@
-## UNRELEASED
+## 1.2.0 - 2025-02-05
 
 - Add Rails 8 support [#52](https://github.com/bambooengineering/que-unique/pull/52)
 
