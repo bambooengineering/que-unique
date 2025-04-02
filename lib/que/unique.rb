@@ -14,7 +14,7 @@ module Que
 
     included do
       singleton_class.class_eval do
-        def enqueue_before_unique(*args)
+        def enqueue_before_unique(*args, **kwargs)
           thread_local_hash = Thread.current[Que::Unique::THREAD_LOCAL_KEY]
           unless thread_local_hash
             raise "UniqueQueJob #{self} being scheduled outside a transaction"
@@ -22,15 +22,17 @@ module Que
 
           # Once the args are canonicalised, we convert it to a JSON string to match against.
           canonicalised_args = args.map { |arg| Que::Unique.canonicalise_que_unique_arg(arg) }
-          args_key = { self => canonicalised_args }.to_json
+          canonicalised_kwargs = Que::Unique.canonicalise_que_unique_arg(kwargs)
+          cache_key = { self => [canonicalised_args, canonicalised_kwargs] }.to_json
+
           # If this is already known then don't enqueue it again. Otherwise, add it to the last
           # element of the array.
-          if thread_local_hash.key?(args_key)
-            ::Rails.logger.debug "Que::Unique - #{self} - Already scheduled: #{args_key}"
+          if thread_local_hash.key?(cache_key)
+            ::Rails.logger.debug "Que::Unique - #{self} - Already scheduled: #{cache_key}"
           else
-            ::Rails.logger.debug "Que::Unique - #{self} - Enqueuing #{args_key}"
-            thread_local_hash[args_key] = true
-            enqueue_after_unique(*canonicalised_args)
+            ::Rails.logger.debug "Que::Unique - #{self} - Enqueuing #{cache_key}"
+            thread_local_hash[cache_key] = true
+            enqueue_after_unique(*args, **kwargs)
           end
         end
 
