@@ -1,3 +1,8 @@
+## 1.3.0 - 2025-02-05
+
+- Preserve kwargs when enqueuing a job [#57](https://github.com/bambooengineering/que-unique/pull/57)
+- Drop support for Que 0.x and 1.x [#58](https://github.com/bambooengineering/que-unique/pull/58)
+
 ## 1.2.0 - 2025-02-05
 
 - Add Rails 8 support [#52](https://github.com/bambooengineering/que-unique/pull/52)

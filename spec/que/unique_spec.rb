@@ -18,9 +18,10 @@ RSpec.describe Que::Unique do
     select_jobs.to_a.count
   end
 
+  # :reek:UtilityFunction
   def que_version
     # The constant holding Que's version was renamed in Que 1
-    Gem::Version.new(defined?(::Que::Version) ? ::Que::Version : ::Que::VERSION)
+    Gem::Version.new(defined?(Que::Version) ? Que::Version : Que::VERSION)
   end
 
   def run_at_kwargs(run_at)
@@ -136,7 +137,7 @@ RSpec.describe Que::Unique do
         TestUniqueJob.enqueue("foo", { foo: :qux, bar: :baz }, another: :kwarg, my: :kwarg)
         expected = {
           {
-            TestUniqueJob => [["foo", { bar: :baz, foo: :qux }], { another: :kwarg, my: :kwarg }]
+            TestUniqueJob => [["foo", { bar: :baz, foo: :qux }], { another: :kwarg, my: :kwarg }],
           }.to_json => true,
         }
         expect(Thread.current[Que::Unique::THREAD_LOCAL_KEY]).to eq(expected)
@@ -149,7 +150,8 @@ RSpec.describe Que::Unique do
         run_at = Time.current + 1.hour
 
         TestUniqueJob.enqueue("foo", { foo: :qux, bar: :baz }, **run_at_kwargs(run_at), my: :kwarg)
-        TestUniqueJob.enqueue("foo", { foo: :qux, bar: :baz }, my: :kwarg, **run_at_kwargs(run_at + 5.minutes))
+        TestUniqueJob.enqueue("foo", { foo: :qux, bar: :baz }, my: :kwarg,
+                                                               **run_at_kwargs(run_at + 5.minutes))
       end
 
       run_ats = select_jobs.to_a.map { |h| h.fetch("run_at") }
