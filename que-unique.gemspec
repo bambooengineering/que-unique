@@ -5,8 +5,8 @@ require_relative "lib/que/unique/version"
 Gem::Specification.new do |spec|
   spec.name = "que-unique"
   spec.version = Que::Unique::VERSION
-  spec.authors = ["Bamboo Engineering"]
-  spec.email = ["dev@bambooloans.com"]
+  spec.authors = ["Silvercat Devs"]
+  spec.email = ["dev@silvercat.com"]
 
   spec.summary = "A gem that removes duplicates when multiple copies of a que job are enqueued."
   spec.homepage = "https://github.com/bambooengineering/que-unique"
